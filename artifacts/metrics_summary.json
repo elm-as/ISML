@@ -1,0 +1,29 @@
+{
+  "cohort_size": 4500,
+  "overall_impact_classification": {
+    "accuracy": 0.9868888888888889,
+    "balanced_accuracy": 0.972767142651174,
+    "macro_f1": 0.9653533338655843,
+    "weighted_f1": 0.9869924266516243,
+    "multi_class_log_loss": 0.03964317109406112,
+    "per_class_f1": {
+      "Beneficial": 0.994413407821229,
+      "Neutral": 0.9555388093443858,
+      "Negative": 0.9461077844311377
+    }
+  },
+  "psychometric_distress_regression": {
+    "rmse": 4.261318998751022,
+    "mae": 3.3957437344516137,
+    "r2_score": 0.6331955714323988,
+    "spearman_rho": 0.7500277450813816,
+    "spearman_pvalue": 0.0
+  },
+  "top_predictive_features": [
+    "Mental_Health_Index",
+    "Academic_Performance_GPA",
+    "screen_to_sleep_ratio",
+    "stress_wellbeing_disparity",
+    "weekly_screen_load_hours"
+  ]
+}

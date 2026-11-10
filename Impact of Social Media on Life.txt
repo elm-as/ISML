@@ -1,0 +1,31 @@
+📊 Impact of Social Media on Life
+Context
+In recent years, the intersection of digital platform consumption, sleep hygiene, and stress has become a critical focus of behavioral and educational research. This dataset provides granular survey metrics across 4,500 students ranging from high school to postgraduate programs to analyze how digital engagement shapes daily life and well-being.
+
+Dataset Overview
+Total Records: 4,500 student entries
+Attributes: 16 demographic, behavioral, and psychometric metrics
+Target Indicator: Overall_Impact (Beneficial, Neutral, Negative)
+Features Dictionary
+Feature Name	Type	Description
+Student_ID	String	Unique identifier for each participant
+Age	Integer	Participant age (15 to 26 years)
+Gender	String	Self-reported gender category
+Academic_Level	String	High School, Undergraduate, or Postgraduate
+Primary_Platform	String	Most frequently consumed digital platform
+Daily_Usage_Hours	Float	Average daily social media screen time (hours)
+Weekend_Extra_Hours	Float	Supplementary screen time during weekends
+Device_Type	String	Primary device used for access
+Sleep_Duration_Hours	Float	Average nightly sleep duration
+Sleep_Quality_Score	Integer	Self-rated sleep quality (1 to 5 scale)
+Late_Night_Usage	Boolean	Frequent screen time past midnight
+Social_Comparison_Frequency	Categorical	Frequency of social comparison behaviors
+Perceived_Stress_Score	Float	PSS psychometric stress indicator (0 to 40)
+Mental_Health_Index	Integer	Composite well-being metric (10 to 98)
+Academic_Performance_GPA	Float	Cumulative GPA (Scale: 1.70 to 4.00)
+Overall_Impact	Categorical	Multi-factor classification outcome
+Potential Research Questions
+How does nocturnal screen engagement modulate subjective sleep quality?
+Can machine learning models accurately predict Overall_Impact based on usage patterns?
+What is the empirical correlation between daily screen time and cumulative GPA?
+
