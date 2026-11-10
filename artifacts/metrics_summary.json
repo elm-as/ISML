@@ -1,23 +1,37 @@
 {
-  "cohort_size": 4500,
-  "overall_impact_classification": {
+  "tri_cohort_total_subjects": 6532,
+  "cohort_1_primary_students": {
+    "sample_size": 4500,
     "accuracy": 0.9868888888888889,
     "balanced_accuracy": 0.972767142651174,
     "macro_f1": 0.9653533338655843,
     "weighted_f1": 0.9869924266516243,
-    "multi_class_log_loss": 0.03964317109406112,
     "per_class_f1": {
       "Beneficial": 0.994413407821229,
       "Neutral": 0.9555388093443858,
       "Negative": 0.9461077844311377
-    }
+    },
+    "stress_r2_score": 0.6331955714323988,
+    "stress_spearman_rho": 0.7500277450813816
   },
-  "psychometric_distress_regression": {
-    "rmse": 4.261318998751022,
-    "mae": 3.3957437344516137,
-    "r2_score": 0.6331955714323988,
-    "spearman_rho": 0.7500277450813816,
-    "spearman_pvalue": 0.0
+  "cohort_2_global_students": {
+    "sample_size": 832,
+    "num_countries": 113,
+    "addiction_mental_health_corr": -0.6668147493461204,
+    "addiction_conflict_corr": 0.6641701023144655,
+    "sleep_mental_health_corr": 0.5064343639428732,
+    "academic_affect_ratio": 0.6141826923076923
+  },
+  "cohort_3_adolescent_depression": {
+    "sample_size": 1200,
+    "roc_auc": 0.9961919479014322,
+    "pr_auc": 0.9557641020142861,
+    "sensitivity": 0.9354838709677419,
+    "specificity": 1.0,
+    "youden_j": 0.935483870967742,
+    "optimal_threshold": 0.22,
+    "brier_score": 0.0017275588532107999,
+    "f1_score": 0.9666666666666667
   },
   "top_predictive_features": [
     "Mental_Health_Index",

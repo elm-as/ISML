@@ -1,8 +1,13 @@
-"""Unit tests for ISML schema validator."""
+"""Unit tests for ISML schema validator across cohorts."""
 
 import pandas as pd
 import pytest
-from src.data_pipeline.schema_validator import validate_feature_matrix_shapes, validate_survey_schema
+from src.data_pipeline.schema_validator import (
+    validate_cohort2_schema,
+    validate_cohort3_schema,
+    validate_feature_matrix_shapes,
+    validate_survey_schema,
+)
 
 
 def test_schema_validator_rejects_empty_dataframe() -> None:
@@ -45,6 +50,22 @@ def test_schema_validator_rejects_invalid_impact() -> None:
     is_valid, errors = validate_survey_schema(df)
     assert not is_valid
     assert any("invalid overall_impact" in err.lower() for err in errors)
+
+
+def test_cohort2_schema_validator() -> None:
+    """Validate Cohort 2 schema requirements."""
+    df = pd.DataFrame({"Student_ID": [1], "Age": [20]})
+    is_valid, errors = validate_cohort2_schema(df)
+    assert not is_valid
+    assert any("missing columns" in err.lower() for err in errors)
+
+
+def test_cohort3_schema_validator() -> None:
+    """Validate Cohort 3 schema requirements."""
+    df = pd.DataFrame({"age": [16], "depression_label": [0]})
+    is_valid, errors = validate_cohort3_schema(df)
+    assert not is_valid
+    assert any("missing columns" in err.lower() for err in errors)
 
 
 def test_feature_matrix_validator_detects_shape_mismatches() -> None:

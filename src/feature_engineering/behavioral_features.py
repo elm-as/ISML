@@ -61,3 +61,4 @@ def compute_behavioral_features(df: pd.DataFrame) -> pd.DataFrame:
     out["is_beneficial_impact"] = (out["Overall_Impact"] == "Beneficial").astype(int)
 
     return out
+

@@ -37,3 +37,4 @@ def test_triage_student_extracts_correct_fields() -> None:
     report = format_triage_report(res)
     assert "STU_9999" in report
     assert "Screen-to-Sleep Ratio" in report
+

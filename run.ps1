@@ -13,3 +13,4 @@ Write-Host "ISML: Impact of Social Media on Life (4,500 Cohort)" -ForegroundColo
 Write-Host "========================================================" -ForegroundColor Cyan
 
 & $PythonExe main.py @args
+

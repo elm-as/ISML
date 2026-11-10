@@ -122,3 +122,4 @@ def build_feature_matrix(df: pd.DataFrame) -> BehavioralFeatureMatrix:
         feature_names=feature_names,
         student_ids=student_ids,
     )
+

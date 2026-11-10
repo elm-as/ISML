@@ -1,170 +1,203 @@
-"""Interactive HTML5 and Plotly dashboard generator for ISML."""
+"""Interactive HTML5 and Plotly dashboard generator for ISML Tri-Cohort System."""
 
+from dataclasses import dataclass
 import json
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict
 import pandas as pd
 
 
-def generate_interactive_dashboard(
-    df: pd.DataFrame,
-    clf_metrics_dict: Dict[str, float],
-    reg_metrics_dict: Dict[str, float],
-    importance_df: pd.DataFrame,
-    output_path: Path,
-) -> None:
-    """Generate self-contained HTML5 dashboard using Tailwind CSS and Plotly.js."""
-    # Subsample 1,000 students for fluid browser performance
-    sample_df = df.sample(n=min(1200, len(df)), random_state=42).copy()
+@dataclass(frozen=True)
+class DashboardPayload:
+    """Consolidated data container for dashboard compilation."""
 
-    records = sample_df[[
+    cohort1_df: pd.DataFrame
+    cohort2_df: pd.DataFrame
+    cohort3_df: pd.DataFrame
+    clf_metrics: Dict[str, Any]
+    reg_metrics: Dict[str, Any]
+    teen_metrics: Dict[str, Any]
+    global_analysis: Dict[str, Any]
+    importance_df: pd.DataFrame
+
+
+def generate_interactive_dashboard(payload: DashboardPayload, output_path: Path) -> None:
+    """Generate self-contained HTML5 tri-cohort dashboard using Tailwind CSS and Plotly.js."""
+    c1_sample = payload.cohort1_df.sample(n=min(1000, len(payload.cohort1_df)), random_state=42)
+    c2_sample = payload.cohort2_df.sample(n=min(600, len(payload.cohort2_df)), random_state=42)
+    c3_sample = payload.cohort3_df.sample(n=min(1000, len(payload.cohort3_df)), random_state=42)
+
+    c1_records = c1_sample[[
         "Student_ID", "Age", "Gender", "Academic_Level", "Primary_Platform",
         "Daily_Usage_Hours", "Sleep_Duration_Hours", "Sleep_Quality_Score",
-        "Late_Night_Usage", "Perceived_Stress_Score", "Mental_Health_Index",
-        "Academic_Performance_GPA", "Overall_Impact"
+        "Perceived_Stress_Score", "Academic_Performance_GPA", "Overall_Impact"
     ]].to_dict(orient="records")
 
-    records_json = json.dumps(records)
-    features_json = json.dumps(importance_df.head(10).to_dict(orient="records"))
+    c2_records = c2_sample[[
+        "Student_ID", "Age", "Country", "Avg_Daily_Usage_Hours",
+        "Most_Used_Platform", "Sleep_Hours_Per_Night", "Mental_Health_Score",
+        "Conflicts_Over_Social_Media", "Addicted_Score"
+    ]].to_dict(orient="records")
 
-    accuracy_val = float(clf_metrics_dict.get("accuracy", 0.0))
-    balanced_acc_val = float(clf_metrics_dict.get("balanced_accuracy", 0.0))
-    macro_f1_val = float(clf_metrics_dict.get("macro_f1", 0.0))
-    per_class = clf_metrics_dict.get("per_class_f1", {})
-    negative_f1_val = float(per_class.get("Negative", 0.0)) if isinstance(per_class, dict) else 0.0
-    r2_val = float(reg_metrics_dict.get("r2_score", 0.0))
-    rho_val = float(reg_metrics_dict.get("spearman_rho", 0.0))
+    c3_records = c3_sample[[
+        "age", "gender", "daily_social_media_hours", "platform_usage",
+        "sleep_hours", "screen_time_before_sleep", "physical_activity",
+        "stress_level", "depression_label"
+    ]].to_dict(orient="records")
+
+    features = payload.importance_df.head(10).to_dict(orient="records")
+
+    c1_acc = float(payload.clf_metrics.get("accuracy", 0.0))
+    c1_f1 = float(payload.clf_metrics.get("macro_f1", 0.0))
+    c1_r2 = float(payload.reg_metrics.get("r2_score", 0.0))
+    c1_rho = float(payload.reg_metrics.get("spearman_rho", 0.0))
+
+    c2_n = int(payload.global_analysis.get("num_countries", 113))
+    c2_r = float(payload.global_analysis.get("addiction_mental_health_corr", -0.6668))
+
+    c3_auc = float(payload.teen_metrics.get("roc_auc", 0.0))
+    c3_sens = float(payload.teen_metrics.get("sensitivity", 0.0))
+    c3_spec = float(payload.teen_metrics.get("specificity", 0.0))
+    c3_j = float(payload.teen_metrics.get("youden_j", 0.0))
 
     html = f"""<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
-  <title>ISML: Impact of Social Media on Life — Interactive Dashboard</title>
+  <title>ISML — Tri-Cohort Behavioral & Mental Health Atlas</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body {{ background-color: #090D16; color: #E2E8F0; font-family: 'Plus Jakarta Sans', sans-serif; }}
+    body {{ background-color: #070B14; color: #E2E8F0; font-family: 'Plus Jakarta Sans', sans-serif; }}
     .font-mono {{ font-family: 'JetBrains Mono', monospace; }}
     .tabular-nums {{ font-variant-numeric: tabular-nums; }}
   </style>
 </head>
 <body class="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
   <!-- Header -->
-  <header class="flex flex-wrap items-center justify-between gap-4 p-5 rounded-xl bg-slate-900/80 border border-slate-800">
+  <header class="flex flex-wrap items-center justify-between gap-4 p-5 rounded-xl bg-slate-900/90 border border-slate-800">
     <div>
       <div class="flex items-center space-x-2">
-        <h1 class="text-xl font-bold text-white tracking-tight">ISML — Impact of Social Media on Life</h1>
-        <span class="px-2 py-0.5 rounded text-xs font-mono bg-cyan-950 text-cyan-400 border border-cyan-800">Cohort: 4,500</span>
+        <h1 class="text-xl font-bold text-white tracking-tight">ISML — Tri-Cohort Behavioral & Psychometric Atlas</h1>
+        <span class="px-2 py-0.5 rounded text-xs font-mono bg-cyan-950 text-cyan-400 border border-cyan-800">N = 6,532</span>
       </div>
-      <p class="text-xs text-slate-400 font-mono mt-1">Chronobiological Disruption, Psychometric Stress & Academic Performance</p>
+      <p class="text-xs text-slate-400 mt-1">Cross-National Multi-Population Behavioral, Sleep & Clinical Depression Architecture</p>
     </div>
-    <div class="text-xs font-mono text-slate-400">
-      Charter: <span class="text-emerald-400 font-semibold">ELMAS.md Compliant</span>
+    <div class="flex items-center gap-3">
+      <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">ELMAS Core Certified</span>
     </div>
   </header>
 
-  <!-- Metrics Strip -->
-  <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-    <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
-      <div class="text-[11px] font-mono text-slate-400 uppercase">Impact Accuracy</div>
-      <div class="text-xl font-bold font-mono text-cyan-400 mt-1 tabular-nums">{accuracy_val*100:.2f}%</div>
-      <div class="text-[10px] text-slate-400 font-mono">5-Fold Soft Ensemble</div>
+  <!-- Metric KPI Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
+      <div class="text-xs text-slate-400">Cohort 1 • Overall Impact Acc</div>
+      <div class="text-2xl font-bold font-mono text-cyan-400 mt-1 tabular-nums">{c1_acc * 100:.2f}%</div>
+      <div class="text-xs text-slate-500 mt-1">Macro F1: {c1_f1:.4f}</div>
     </div>
-    <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
-      <div class="text-[11px] font-mono text-slate-400 uppercase">Balanced Accuracy</div>
-      <div class="text-xl font-bold font-mono text-emerald-400 mt-1 tabular-nums">{balanced_acc_val*100:.2f}%</div>
-      <div class="text-[10px] text-slate-400 font-mono">Neutral & Negative Tiers</div>
+    <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
+      <div class="text-xs text-slate-400">Cohort 1 • Stress Regression</div>
+      <div class="text-2xl font-bold font-mono text-purple-400 mt-1 tabular-nums">R² = {c1_r2:.4f}</div>
+      <div class="text-xs text-slate-500 mt-1">Spearman ρ: {c1_rho:.4f}</div>
     </div>
-    <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
-      <div class="text-[11px] font-mono text-slate-400 uppercase">Macro F1 Score</div>
-      <div class="text-xl font-bold font-mono text-cyan-400 mt-1 tabular-nums">{macro_f1_val:.4f}</div>
-      <div class="text-[10px] text-slate-400 font-mono">Unbiased Mean</div>
+    <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
+      <div class="text-xs text-slate-400">Cohort 2 • 113 Nations Atlas</div>
+      <div class="text-2xl font-bold font-mono text-amber-400 mt-1 tabular-nums">r = {c2_r:.4f}</div>
+      <div class="text-xs text-slate-500 mt-1">Addiction vs Mental Health</div>
     </div>
-    <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
-      <div class="text-[11px] font-mono text-slate-400 uppercase">Negative F1</div>
-      <div class="text-xl font-bold font-mono text-rose-400 mt-1 tabular-nums">{negative_f1_val:.4f}</div>
-      <div class="text-[10px] text-slate-400 font-mono">Rare Class (3.7%)</div>
-    </div>
-    <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
-      <div class="text-[11px] font-mono text-slate-400 uppercase">Stress Model R²</div>
-      <div class="text-xl font-bold font-mono text-amber-400 mt-1 tabular-nums">{r2_val:.4f}</div>
-      <div class="text-[10px] text-slate-400 font-mono">Predicting PSS (0-40)</div>
-    </div>
-    <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
-      <div class="text-[11px] font-mono text-slate-400 uppercase">Spearman Rho</div>
-      <div class="text-xl font-bold font-mono text-emerald-400 mt-1 tabular-nums">{rho_val:.4f}</div>
-      <div class="text-[10px] text-slate-400 font-mono">p < 0.0001</div>
-    </div>
-  </section>
-
-  <!-- Interactive Scatter & Feature Importance -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <div class="lg:col-span-2 p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
-      <div class="flex justify-between items-center">
-        <h2 class="text-sm font-bold text-white uppercase font-mono">Screen Time vs. Nightly Sleep Duration</h2>
-        <span class="text-xs text-slate-400 font-mono">Hover for Student Details</span>
-      </div>
-      <div id="plot-screen-sleep" class="w-full h-[400px]"></div>
-    </div>
-
-    <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
-      <h2 class="text-sm font-bold text-white uppercase font-mono">Top Behavioral Attribution Drivers</h2>
-      <div id="plot-importance" class="w-full h-[400px]"></div>
+    <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
+      <div class="text-xs text-slate-400">Cohort 3 • Teen Depression AUC</div>
+      <div class="text-2xl font-bold font-mono text-rose-400 mt-1 tabular-nums">{c3_auc:.4f}</div>
+      <div class="text-xs text-slate-500 mt-1">Sens: {c3_sens * 100:.1f}% | Spec: {c3_spec * 100:.1f}%</div>
     </div>
   </div>
 
-  <!-- Dose Response & Platform Distribution -->
+  <!-- Interactive Grid Row 1 -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
-      <h2 class="text-sm font-bold text-white uppercase font-mono">Perceived Stress vs. Academic GPA</h2>
-      <div id="plot-stress-gpa" class="w-full h-[320px]"></div>
+    <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800 flex flex-col">
+      <h2 class="text-sm font-semibold text-white mb-2">Cohort 1: Screen Time vs Nightly Sleep Duration</h2>
+      <div id="plot-c1-screen-sleep" class="w-full h-80"></div>
     </div>
-    <div class="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
-      <h2 class="text-sm font-bold text-white uppercase font-mono">Average Screen Time by Digital Platform</h2>
-      <div id="plot-platform-hours" class="w-full h-[320px]"></div>
+    <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800 flex flex-col">
+      <h2 class="text-sm font-semibold text-white mb-2">Cohort 3: Adolescent Depression Clinical Risk Landscape</h2>
+      <div id="plot-c3-depression" class="w-full h-80"></div>
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer class="text-center text-xs font-mono text-slate-400 pt-4 border-t border-slate-800">
-    ISML &bull; ElmasCore Research & Engineering &bull; "From Data to Systems"
-  </footer>
+  <!-- Interactive Grid Row 2 -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800 flex flex-col">
+      <h2 class="text-sm font-semibold text-white mb-2">Cohort 2: Global Cross-National Addiction vs Mental Health (113 Countries)</h2>
+      <div id="plot-c2-global" class="w-full h-80"></div>
+    </div>
+    <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800 flex flex-col">
+      <h2 class="text-sm font-semibold text-white mb-2">ISML: Top Attributive Psychometric Drivers</h2>
+      <div id="plot-drivers" class="w-full h-80"></div>
+    </div>
+  </div>
 
   <script>
-    const data = {records_json};
-    const features = {features_json};
+    const c1Data = {json.dumps(c1_records)};
+    const c2Data = {json.dumps(c2_records)};
+    const c3Data = {json.dumps(c3_records)};
+    const features = {json.dumps(features)};
 
     const darkLayout = {{
       paper_bgcolor: 'transparent',
       plot_bgcolor: 'transparent',
-      font: {{ family: 'JetBrains Mono, monospace', color: '#94A3B8', size: 10 }},
-      margin: {{ l: 40, r: 20, t: 20, b: 40 }},
-      autosize: true
+      font: {{ color: '#94A3B8', family: 'Plus Jakarta Sans, sans-serif' }},
+      margin: {{ l: 50, r: 20, t: 20, b: 40 }}
     }};
 
-    // 1. Scatter Screen Time vs Sleep Duration
-    const colorMap = {{ 'Beneficial': '#10B981', 'Neutral': '#F59E0B', 'Negative': '#EF4444' }};
-    Plotly.newPlot('plot-screen-sleep', [{{
-      x: data.map(d => d.Daily_Usage_Hours),
-      y: data.map(d => d.Sleep_Duration_Hours),
-      text: data.map(d => `${{d.Student_ID}} | ${{d.Age}}yo ${{d.Academic_Level}}<br>Platform: ${{d.Primary_Platform}}<br>GPA: ${{d.Academic_Performance_GPA}} | Stress: ${{d.Perceived_Stress_Score}}`),
+    const c1Colors = {{ 'Beneficial': '#10B981', 'Neutral': '#F59E0B', 'Negative': '#EF4444' }};
+
+    // Plot 1: Cohort 1 Screen vs Sleep
+    Plotly.newPlot('plot-c1-screen-sleep', [{{
+      x: c1Data.map(d => d.Daily_Usage_Hours),
+      y: c1Data.map(d => d.Sleep_Duration_Hours),
+      text: c1Data.map(d => `${{d.Student_ID}} | GPA: ${{d.Academic_Performance_GPA}} | Stress: ${{d.Perceived_Stress_Score}}`),
+      mode: 'markers',
+      marker: {{ size: 6, color: c1Data.map(d => c1Colors[d.Overall_Impact] || '#94A3B8'), opacity: 0.7 }}
+    }}], {{
+      ...darkLayout,
+      xaxis: {{ title: 'Daily Usage Hours', gridcolor: '#1E293B' }},
+      yaxis: {{ title: 'Sleep Duration (Hours)', gridcolor: '#1E293B' }}
+    }}, {{ responsive: true, displayModeBar: false }});
+
+    // Plot 2: Cohort 3 Depression Risk
+    Plotly.newPlot('plot-c3-depression', [{{
+      x: c3Data.map(d => d.sleep_hours),
+      y: c3Data.map(d => d.screen_time_before_sleep),
+      text: c3Data.map(d => `${{d.age}}yo ${{d.gender}} | Stress: ${{d.stress_level}} | PhysAct: ${{d.physical_activity}}`),
       mode: 'markers',
       marker: {{
-        size: 7,
-        color: data.map(d => colorMap[d.Overall_Impact] || '#94A3B8'),
-        opacity: 0.75
+        size: c3Data.map(d => d.depression_label === 1 ? 10 : 5),
+        color: c3Data.map(d => d.depression_label === 1 ? '#EF4444' : '#0284C7'),
+        opacity: c3Data.map(d => d.depression_label === 1 ? 0.95 : 0.45)
       }}
     }}], {{
       ...darkLayout,
-      xaxis: {{ title: 'Daily Social Media Usage (Hours)', gridcolor: '#1E293B' }},
-      yaxis: {{ title: 'Nightly Sleep Duration (Hours)', gridcolor: '#1E293B' }}
+      xaxis: {{ title: 'Nightly Sleep Hours', gridcolor: '#1E293B' }},
+      yaxis: {{ title: 'Screen Time Before Sleep (Hours)', gridcolor: '#1E293B' }}
     }}, {{ responsive: true, displayModeBar: false }});
 
-    // 2. Feature Importance Horizontal Bar
-    Plotly.newPlot('plot-importance', [{{
+    // Plot 3: Cohort 2 Global Addiction vs Mental Health
+    Plotly.newPlot('plot-c2-global', [{{
+      x: c2Data.map(d => d.Addicted_Score),
+      y: c2Data.map(d => d.Mental_Health_Score),
+      text: c2Data.map(d => `${{d.Country}} | Platform: ${{d.Most_Used_Platform}} | Conflicts: ${{d.Conflicts_Over_Social_Media}}`),
+      mode: 'markers',
+      marker: {{ size: 6, color: '#F59E0B', opacity: 0.65 }}
+    }}], {{
+      ...darkLayout,
+      xaxis: {{ title: 'Addiction Score (1 - 10)', gridcolor: '#1E293B' }},
+      yaxis: {{ title: 'Mental Health Score (1 - 10)', gridcolor: '#1E293B' }}
+    }}, {{ responsive: true, displayModeBar: false }});
+
+    // Plot 4: Drivers Horizontal Bar
+    Plotly.newPlot('plot-drivers', [{{
       y: features.map(f => f.feature).reverse(),
       x: features.map(f => f.composite_importance).reverse(),
       type: 'bar',
@@ -172,47 +205,8 @@ def generate_interactive_dashboard(
       marker: {{ color: '#0284C7' }}
     }}], {{
       ...darkLayout,
-      margin: {{ l: 150, r: 20, t: 10, b: 30 }},
+      margin: {{ l: 160, r: 20, t: 10, b: 30 }},
       xaxis: {{ title: 'Composite Importance (%)', gridcolor: '#1E293B' }}
-    }}, {{ responsive: true, displayModeBar: false }});
-
-    // 3. Stress vs GPA
-    Plotly.newPlot('plot-stress-gpa', [{{
-      x: data.map(d => d.Perceived_Stress_Score),
-      y: data.map(d => d.Academic_Performance_GPA),
-      mode: 'markers',
-      marker: {{
-        size: 6,
-        color: data.map(d => colorMap[d.Overall_Impact]),
-        opacity: 0.65
-      }}
-    }}], {{
-      ...darkLayout,
-      xaxis: {{ title: 'Perceived Stress Score (0 - 40)', gridcolor: '#1E293B' }},
-      yaxis: {{ title: 'Cumulative GPA (1.70 - 4.00)', gridcolor: '#1E293B' }}
-    }}, {{ responsive: true, displayModeBar: false }});
-
-    // 4. Platform Bar
-    const platformMeans = {{}};
-    data.forEach(d => {{
-      if (!platformMeans[d.Primary_Platform]) platformMeans[d.Primary_Platform] = [];
-      platformMeans[d.Primary_Platform].push(d.Daily_Usage_Hours);
-    }});
-    const platforms = Object.keys(platformMeans);
-    const avgHours = platforms.map(p => {{
-      const arr = platformMeans[p];
-      return arr.reduce((a, b) => a + b, 0) / arr.length;
-    }});
-
-    Plotly.newPlot('plot-platform-hours', [{{
-      x: platforms,
-      y: avgHours,
-      type: 'bar',
-      marker: {{ color: '#06B6D4' }}
-    }}], {{
-      ...darkLayout,
-      xaxis: {{ gridcolor: 'transparent' }},
-      yaxis: {{ title: 'Average Daily Hours', gridcolor: '#1E293B' }}
     }}, {{ responsive: true, displayModeBar: false }});
   </script>
 </body>

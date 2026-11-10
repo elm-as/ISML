@@ -34,3 +34,4 @@ def test_encoder_constructs_valid_feature_matrix() -> None:
     assert matrix.target_impact[0] == 0  # Beneficial
     assert matrix.target_impact[1] == 1  # Neutral
     assert len(matrix.student_ids) == 2
+
