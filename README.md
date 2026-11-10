@@ -86,13 +86,13 @@ flowchart TD
 
 ### Empirical Formulations
 1. **Screen-to-Sleep Ratio**:
-   $$\text{SSR}_i = \frac{\text{Daily\_Usage\_Hours}_i}{\text{Sleep\_Duration\_Hours}_i + \epsilon}$$
+   $$\mathrm{SSR}_i = \frac{\text{Daily Usage Hours}_i}{\text{Sleep Duration Hours}_i + \varepsilon}$$
 2. **Weekly Cumulative Screen Load**:
-   $$\text{WSL}_i = 5 \times \text{Daily\_Usage\_Hours}_i + 2 \times (\text{Daily\_Usage\_Hours}_i + \text{Weekend\_Extra\_Hours}_i)$$
+   $$\mathrm{WSL}_i = 5 \times \text{Daily Usage Hours}_i + 2 \times \bigl(\text{Daily Usage Hours}_i + \text{Weekend Extra Hours}_i\bigr)$$
 3. **Chronobiological Sleep Debt**:
-   $$\text{Sleep\_Debt}_i = \max(0, 8.0 - \text{Sleep\_Duration\_Hours}_i)$$
+   $$\text{Sleep Debt}_i = \max\bigl(0, \; 8.0 - \text{Sleep Duration Hours}_i\bigr)$$
 4. **Nocturnal Friction**:
-   $$\text{Nocturnal\_Friction}_i = \mathbb{I}(\text{Late\_Night}_i = \text{True}) \times (5 - \text{Sleep\_Quality}_i)$$
+   $$\text{Nocturnal Friction}_i = \mathbf{1}_{\{\text{Late Night} = \text{True}\}} \times (5 - \text{Sleep Quality Score}_i)$$
 
 ### 5-Fold Stratified Evaluation Benchmarks
 - **Overall Accuracy**: $98.69\%$
