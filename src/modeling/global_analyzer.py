@@ -62,3 +62,4 @@ def analyze_global_cohort(df: pd.DataFrame) -> Tuple[GlobalCohortAnalysis, pd.Da
     )
 
     return analysis, country_summary
+

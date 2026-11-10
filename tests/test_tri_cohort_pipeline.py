@@ -85,3 +85,4 @@ def test_youden_threshold_optimization() -> None:
     assert youden_j > 0.8
     assert sens == 1.0
     assert spec == 1.0
+

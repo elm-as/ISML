@@ -45,3 +45,4 @@ def compute_global_features(df: pd.DataFrame) -> pd.DataFrame:
     engineered["platform_normalized_usage_z"] = (usage - platform_mean) / platform_std
 
     return engineered
+
